@@ -20,6 +20,7 @@ const row = (bill) => {
 };
 
 const rows = (data) => {
+    //resolving [Bug report] - Bills
     if (data && data.length) {
         const dataSorted = [...data].sort((billA, billB) => {
             const date1 = new Date(billA.date);
@@ -31,6 +32,7 @@ const rows = (data) => {
     } else {
         return "";
     }
+
     //return data && data.length ? data.map((bill) => row(bill)).join("") :
 };
 
