@@ -33,7 +33,7 @@ const rows = (data) => {
         return "";
     }
 
-    //return data && data.length ? data.map((bill) => row(bill)).join("") :
+    //return data && data.length ? data.map((bill) => row(bill)).join("") : ""
 };
 
 export default ({ data: bills, loading, error }) => {
