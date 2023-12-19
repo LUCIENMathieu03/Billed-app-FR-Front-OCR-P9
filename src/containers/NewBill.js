@@ -17,6 +17,7 @@ export default class NewBill {
         this.billId = null;
         new Logout({ document, localStorage, onNavigate });
     }
+
     handleChangeFile = (e) => {
         e.preventDefault();
         const file = this.document.querySelector(`input[data-testid="file"]`)
@@ -26,42 +27,42 @@ export default class NewBill {
 
         //verification de l'extesion du fichier [Bug Hunt] - Bills
         const extension = fileName.split(".").pop();
-        switch (extension) {
-            case "jpg":
-            case "jpeg":
-            case "png":
-                const formData = new FormData();
-                const email = JSON.parse(localStorage.getItem("user")).email;
-                formData.append("file", file);
-                formData.append("email", email);
+        if (
+            extension === "jpg" ||
+            extension === "jpeg" ||
+            extension === "png"
+        ) {
+            const formData = new FormData();
+            const email = JSON.parse(localStorage.getItem("user")).email;
+            formData.append("file", file);
+            formData.append("email", email);
 
-                this.store
-                    .bills()
-                    .create({
-                        data: formData,
-                        headers: {
-                            noContentType: true,
-                        },
-                    })
-                    .then(({ fileUrl, key }) => {
-                        console.log(fileUrl);
-                        this.billId = key;
-                        this.fileUrl = fileUrl;
-                        this.fileName = fileName;
-                    })
-                    .catch((error) => console.error(error));
-                break;
-            default:
-                alert("les fichier autoriser sont : jpg, jpeg ou png");
-                e.target.value = "";
+            this.store
+                .bills()
+                .create({
+                    data: formData,
+                    headers: {
+                        noContentType: true,
+                    },
+                })
+                .then(({ fileUrl, key }) => {
+                    console.log(fileUrl);
+                    this.billId = key;
+                    this.fileUrl = fileUrl;
+                    this.fileName = fileName;
+                })
+                .catch((error) => console.error(error));
+        } else {
+            e.target.value = "";
         }
     };
+
     handleSubmit = (e) => {
         e.preventDefault();
-        console.log(
-            'e.target.querySelector(`input[data-testid="datepicker"]`).value',
-            e.target.querySelector(`input[data-testid="datepicker"]`).value
-        );
+        // console.log(
+        //     'e.target.querySelector(`input[data-testid="datepicker"]`).value',
+        //     e.target.querySelector(`input[data-testid="datepicker"]`).value
+        // );
         const email = JSON.parse(localStorage.getItem("user")).email;
         const bill = {
             email,

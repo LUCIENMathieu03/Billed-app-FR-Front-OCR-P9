@@ -20,20 +20,18 @@ const row = (bill) => {
 };
 
 const rows = (data) => {
-    //resolving [Bug report] - Bills
-    if (data && data.length) {
-        const dataSorted = [...data].sort((billA, billB) => {
-            const date1 = new Date(billA.date);
-            const date2 = new Date(billB.date);
-            return date2 - date1;
-        });
-
-        return dataSorted.map((bill) => row(bill)).join("");
+    //resolving [Bug report] - Bills  [!!!FAIL!!!]
+    if (data) {
+        return data
+            .sort((bill1, bill2) => {
+                return new Date(bill2.date) - new Date(bill1.date);
+            })
+            .map((bill) => row(bill))
+            .join("");
     } else {
         return "";
     }
-
-    //return data && data.length ? data.map((bill) => row(bill)).join("") : ""
+    // return data && data.length ? data.map((bill) => row(bill)).join("") : "";
 };
 
 export default ({ data: bills, loading, error }) => {
