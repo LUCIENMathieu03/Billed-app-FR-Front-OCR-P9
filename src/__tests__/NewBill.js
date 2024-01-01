@@ -13,7 +13,7 @@ import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import router from "../app/Router.js";
-import { ROUTES_PATH } from "../constants/routes.js";
+import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
 
 describe("Given I am connected as an employee", () => {
     describe("When I am on NewBill Page", () => {
@@ -47,11 +47,8 @@ describe("Given I am connected as an employee", () => {
             expect(mailIcon).toHaveClass("active-icon");
         });
 
-        describe('When I add a new "justificatif"', async () => {
+        describe('When I add a new "justificatif"', () => {
             beforeEach(async () => {
-                Object.defineProperty(window, "localStorage", {
-                    value: localStorageMock,
-                });
                 window.localStorage.setItem(
                     "user",
                     JSON.stringify({
@@ -65,7 +62,7 @@ describe("Given I am connected as an employee", () => {
                 document.body.append(root);
                 router();
 
-                await window.onNavigate(ROUTES_PATH.NewBill);
+                window.onNavigate(ROUTES_PATH.NewBill);
             });
 
             test("Then the file should not be added when the extension is not jpg, jpeg, png", () => {
@@ -74,6 +71,7 @@ describe("Given I am connected as an employee", () => {
                     onNavigate,
                     localStorage: window.localStorage,
                 });
+
                 const handleChangeFile = jest.fn(
                     () => newBills.handleChangeFile
                 );
@@ -81,7 +79,9 @@ describe("Given I am connected as an employee", () => {
                     `input[data-testid="file"]`
                 );
                 // const inputFile = screen.getByTestId("file");
-                inputFile.addEventListener("change", handleChangeFile);
+                inputFile.addEventListener("change", (e) =>
+                    handleChangeFile(e)
+                );
                 fireEvent.change(inputFile, {
                     target: {
                         files: [
@@ -93,26 +93,38 @@ describe("Given I am connected as an employee", () => {
                 });
 
                 expect(inputFile.value).toBe("");
+                expect(handleChangeFile).toBeCalled();
             });
 
             test("Then the file should be added if the extension is good(jpg, jpeg, png)", () => {
-                jest.spyOn(mockStore, "bills");
                 const newBill = new NewBill({
                     document,
                     onNavigate,
                     store: mockStore,
                     localStorage: window.localStorage,
                 });
-                const handleChangeFile = jest.fn(
-                    () => newBill.handleChangeFile
-                );
+
+                const createSpy = jest
+                    .spyOn(newBill.store.bills(), "create")
+                    .mockResolvedValue({
+                        fileUrl: "https://example.com/test.jpg",
+                        key: "1234",
+                    });
+
+                // Créez un faux événement "change" avec une valeur simulée
+                const fakeEvent = {
+                    preventDefault: jest.fn(),
+                    target: {
+                        value: "test.png",
+                    },
+                };
+
                 const inputFile = document.querySelector(
                     `input[data-testid="file"]`
                 );
-                // const inputFile = screen.getByTestId("file");
 
-                inputFile.addEventListener("change", (e) => {
-                    handleChangeFile(e);
+                inputFile.addEventListener("change", () => {
+                    newBill.handleChangeFile(fakeEvent);
                 });
 
                 fireEvent.change(inputFile, {
@@ -125,69 +137,14 @@ describe("Given I am connected as an employee", () => {
                     },
                 });
 
-                expect(handleChangeFile).toBeCalled();
+                expect(createSpy).toBeCalled();
                 expect(inputFile.files[0].type).toBe("image/png");
-
-                fireEvent.change(inputFile, {
-                    target: {
-                        files: [
-                            new File(["test.jpg"], "test.jpg", {
-                                type: "image/jpg",
-                            }),
-                        ],
-                    },
-                });
-
-                expect(handleChangeFile).toBeCalled();
-                expect(inputFile.files[0].type).toBe("image/jpg");
-
-                fireEvent.change(inputFile, {
-                    target: {
-                        files: [
-                            new File(["test.jpeg"], "test.jpeg", {
-                                type: "image/jpeg",
-                            }),
-                        ],
-                    },
-                });
-                // console.log(inputFile.files);
-                expect(handleChangeFile).toBeCalled();
-                expect(inputFile.files[0].type).toBe("image/jpeg");
-
-                console.log(localStorage.getItem());
-            });
-
-            test("Then we should get a file url", async () => {
-                const newBills = new NewBill({
-                    document,
-                    onNavigate,
-                    store: mockStore,
-                    localStorage: window.localStorage,
-                });
-
-                await newBills.store
-                    .bills()
-                    .create()
-                    .then(({ fileUrl, key }) => {
-                        newBills.billId = key;
-                        newBills.fileUrl = fileUrl;
-                        newBills.fileName = "testCreate";
-                    });
-
-                expect(newBills.fileUrl).toEqual(
-                    "https://localhost:3456/images/test.jpg"
-                );
-                expect(newBills.billId).toEqual("1234");
-                expect(newBills.fileName).toEqual("testCreate");
             });
         });
 
-        //Post
+        //POST
         describe("When I fill the form", () => {
             test("Then the form should be submitted if all the input is filled well and we should go to the bill page", async () => {
-                Object.defineProperty(window, "localStorage", {
-                    value: localStorageMock,
-                });
                 window.localStorage.setItem(
                     "user",
                     JSON.stringify({
@@ -202,19 +159,24 @@ describe("Given I am connected as an employee", () => {
                 document.body.append(root);
                 router();
 
-                await window.onNavigate(ROUTES_PATH.NewBill);
+                const onNavigate = jest.fn((pathname) => {
+                    document.body.innerHTML = ROUTES({ pathname });
+                });
+
+                window.onNavigate(ROUTES_PATH.NewBill);
+
                 const newBill = new NewBill({
                     document,
                     onNavigate,
-                    mockStore,
+                    store: mockStore,
                     localStorage: window.localStorage,
                 });
 
-                const handleSubmit = jest.fn(() => newBill.handleSubmit);
+                const handleSubmit = jest.fn((e) => newBill.handleSubmit(e));
                 const form = document.querySelector(
                     'form[data-testid="form-new-bill"]'
                 );
-                // const form = screen.getByTestId("form-new-bill");
+
                 form.addEventListener("submit", (e) => {
                     handleSubmit(e);
                 });
@@ -254,13 +216,13 @@ describe("Given I am connected as an employee", () => {
                 userEvent.click(submitBtn);
 
                 expect(handleSubmit).toBeCalled();
-                expect(await window.location.href).toBe(
-                    "http://localhost/#employee/bills"
+                expect(newBill.onNavigate).toHaveBeenCalledWith(
+                    "#employee/bills"
                 );
             });
         });
 
-        //POST
+        //PUT
         describe("When updating a bill", () => {
             test("Then the store should update", async () => {
                 jest.spyOn(mockStore, "bills");

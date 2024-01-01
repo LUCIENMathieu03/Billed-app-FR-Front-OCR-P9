@@ -20,7 +20,7 @@ const row = (bill) => {
 };
 
 const rows = (data) => {
-    //resolving [Bug report] - Bills  [!!!FAIL!!!]
+    //resolving [Bug report] - Bills
     if (data) {
         return data
             .sort((bill1, bill2) => {
